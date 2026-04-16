@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BLR Pothole Watch</title>
+    <meta
+      name="description"
+      content="Track Bengaluru potholes, bad roads, and constituency-level accountability in one public dashboard."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <nav class="topbar">
+          <div class="brand">
+            <span class="brand-badge">BPW</span>
+            <div>
+              <p>BLR Pothole Watch</p>
+              <span>Road accountability for Bengaluru</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <a href="#report-form" class="button button-secondary">Report now</a>
+            <a href="#constituencies" class="button button-primary">See accountability</a>
+          </div>
+        </nav>
+
+        <section class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Public pressure, mapped clearly</p>
+            <h1>Show where potholes are piling up and who is responsible for fixing them.</h1>
+            <p class="hero-text">
+              Citizens upload road damage, the dashboard groups hotspots, and every report is
+              tied to a Bengaluru constituency so poor maintenance is visible in public.
+            </p>
+            <div class="hero-metrics" id="hero-metrics"></div>
+          </div>
+
+          <aside class="hero-panel">
+            <p class="panel-label">This MVP includes</p>
+            <ul class="hero-list">
+              <li>Citizen reports with severity and status</li>
+              <li>Hotspot map based on Bengaluru sample coordinates</li>
+              <li>MLA-facing accountability scoreboard</li>
+              <li>Local-first demo storage for quick testing</li>
+              <li>Supabase/PostGIS schema for the next step</li>
+            </ul>
+          </aside>
+        </section>
+      </header>
+
+      <main>
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Live snapshot</p>
+              <h2>Where the road damage is hurting most</h2>
+            </div>
+            <div class="filter-row">
+              <label class="field">
+                <span>Severity</span>
+                <select id="severity-filter">
+                  <option value="all">All</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Status</span>
+                <select id="status-filter">
+                  <option value="all">All</option>
+                  <option value="open">Open</option>
+                  <option value="in-progress">In progress</option>
+                  <option value="fixed">Fixed</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="map-card">
+              <div class="card-header">
+                <div>
+                  <p class="eyebrow">Hotspot map</p>
+                  <h3>Bengaluru reports</h3>
+                </div>
+                <p class="legend">Larger markers mean more severe damage.</p>
+              </div>
+              <div class="map-frame">
+                <div class="map-city-outline"></div>
+                <svg id="report-map" viewBox="0 0 1000 700" aria-label="Pothole map"></svg>
+              </div>
+              <div class="map-legend">
+                <span><i class="dot critical"></i> Critical</span>
+                <span><i class="dot high"></i> High</span>
+                <span><i class="dot medium"></i> Medium</span>
+                <span><i class="dot low"></i> Low</span>
+              </div>
+            </section>
+
+            <section class="panel-card">
+              <div class="card-header">
+                <div>
+                  <p class="eyebrow">Worst stretches</p>
+                  <h3>Hotspot clusters</h3>
+                </div>
+              </div>
+              <div id="hotspot-list" class="stack-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="section" id="constituencies">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Accountability layer</p>
+              <h2>Constituency pressure board</h2>
+            </div>
+            <p class="section-note">
+              Rankings are based on open and in-progress reports weighted by severity.
+            </p>
+          </div>
+
+          <div id="constituency-grid" class="constituency-grid"></div>
+        </section>
+
+        <section class="section form-section" id="report-form">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Citizen input</p>
+              <h2>Add a pothole or bad road report</h2>
+            </div>
+            <p class="section-note">
+              Reports are stored in your browser for this MVP, so you can test the whole flow
+              immediately.
+            </p>
+          </div>
+
+          <div class="form-layout">
+            <form id="report-form-element" class="report-form">
+              <label class="field">
+                <span>Location / road stretch</span>
+                <input type="text" name="title" placeholder="Outer Ring Road near Bellandur flyover" required />
+              </label>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Assembly constituency</span>
+                  <select name="constituencyId" id="constituency-select" required></select>
+                </label>
+
+                <label class="field">
+                  <span>Severity</span>
+                  <select name="severity" required>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Latitude</span>
+                  <input type="number" name="lat" step="0.0001" min="12.80" max="13.20" required />
+                </label>
+
+                <label class="field">
+                  <span>Longitude</span>
+                  <input type="number" name="lng" step="0.0001" min="77.40" max="77.85" required />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Description</span>
+                <textarea
+                  name="description"
+                  rows="4"
+                  placeholder="Deep potholes after rain, dangerous for two-wheelers and school buses."
+                  required
+                ></textarea>
+              </label>
+
+              <button type="submit" class="button button-primary button-wide">Save report</button>
+              <p id="form-message" class="form-message" aria-live="polite"></p>
+            </form>
+
+            <aside class="panel-card">
+              <div class="card-header">
+                <div>
+                  <p class="eyebrow">Recent reports</p>
+                  <h3>What people are flagging</h3>
+                </div>
+              </div>
+              <div id="reports-feed" class="stack-list compact"></div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
