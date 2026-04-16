@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BLR Pothole Watch</title>
+    <title>nammaRoadu</title>
     <meta
       name="description"
       content="Track Bengaluru potholes, bad roads, and constituency-level accountability in one public dashboard."
@@ -14,29 +14,80 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="page-shell">
-      <header class="hero">
-        <nav class="topbar">
-          <div class="brand">
-            <span class="brand-badge">BPW</span>
-            <div>
-              <p>BLR Pothole Watch</p>
-              <span>Road accountability for Bengaluru</span>
+      <header class="hero" style="padding-bottom: 24px; margin-bottom: 24px;">
+        <header class="topbar">
+        <div style="display:flex; align-items:center;">
+          <div style="line-height:1.1;">
+            <h1 class="brand" style="margin:0; font-size:1.6rem; font-weight: 900; letter-spacing:-0.5px; color:#1a202c;">namma<span style="color:#ea3800;">Roadu</span></h1>
+            <span style="font-size:0.8rem; color:#718096; font-weight: 700; letter-spacing: 0.5px;">ROAD ACCOUNTABILITY</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="#report-form" class="button button-primary" style="display:inline-flex; align-items:center; justify-content:center; gap: 8px; font-weight: 800; letter-spacing: 0.5px; padding: 14px 24px; box-shadow: 0 6px 16px rgba(234, 56, 0, 0.45); font-size: 1rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="18" height="18"><path d="M12 5v14M5 12h14"></path></svg>
+              Report now
+            </a>
+            <a href="#constituencies" class="button button-secondary desktop-only">See accountability</a>
+          </div>
+        </header>
+      </header>
+
+      <main>
+        <section class="section" id="map-section" style="padding-top: 16px;">
+          <div class="filter-row" style="margin-bottom: 20px;">
+            <div style="display:flex; gap:8px; flex:1;">
+              <label class="field" style="flex: 1;">
+                <select id="severity-filter">
+                <option value="all">All Severity</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+
+            <label class="field" style="flex: 1;">
+              <select id="status-filter">
+                <option value="all">All Status</option>
+                <option value="open">Open</option>
+                <option value="in-progress">In progress</option>
+                <option value="fixed">Fixed</option>
+              </select>
+            </label>
+            </div>
+            
+            <div class="view-toggle">
+              <a href="#" class="toggle-btn active" id="btn-map" onclick="toggleView('map'); return false;">Map</a>
+              <a href="#" class="toggle-btn" id="btn-list" onclick="toggleView('list'); return false;">List</a>
             </div>
           </div>
-          <div class="topbar-actions">
-            <a href="#report-form" class="button button-secondary">Report now</a>
-            <a href="#constituencies" class="button button-primary">See accountability</a>
-          </div>
-        </nav>
 
-        <section class="hero-grid">
+          <div id="map-wrapper" style="position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div class="map-card map-frame" id="report-map" style="position: absolute; top:0; left:0; width:100%; height:100%; margin: 0; z-index: 1;"></div>
+            
+            <div id="list-container" style="display: none; flex: 1; overflow-y: auto; background: white; z-index: 1000; position: absolute; top:0; left:0; width:100%; height:100%;">
+              <!-- List items rendered via JS -->
+            </div>
+
+            <div id="map-stats-overlay" class="map-stats-overlay"></div>
+          </div>
+          <div class="map-legend">
+            <span><i class="dot critical"></i> Critical</span>
+            <span><i class="dot high"></i> High</span>
+            <span><i class="dot medium"></i> Medium</span>
+            <span><i class="dot low"></i> Low</span>
+          </div>
+        </section>
+
+        <section class="section hero-grid desktop-only" style="margin-top: 24px; padding: 24px;">
           <div class="hero-copy">
             <p class="eyebrow">Public pressure, mapped clearly</p>
-            <h1>Show where potholes are piling up and who is responsible for fixing them.</h1>
+            <h1>Show where potholes are piling up.</h1>
             <p class="hero-text">
               Citizens upload road damage, the dashboard groups hotspots, and every report is
               tied to a Bengaluru constituency so poor maintenance is visible in public.
@@ -44,84 +95,18 @@
             <div class="hero-metrics" id="hero-metrics"></div>
           </div>
 
-          <aside class="hero-panel">
-            <p class="panel-label">This MVP includes</p>
-            <ul class="hero-list">
-              <li>Citizen reports with severity and status</li>
-              <li>Hotspot map based on Bengaluru sample coordinates</li>
-              <li>MLA-facing accountability scoreboard</li>
-              <li>Local-first demo storage for quick testing</li>
-              <li>Supabase/PostGIS schema for the next step</li>
-            </ul>
+          <aside class="panel-card" style="flex: 0.8; padding: 0; background: transparent; border: 0; box-shadow: none;">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Worst stretches</p>
+                <h3>Hotspot clusters</h3>
+              </div>
+            </div>
+            <div id="hotspot-list" class="stack-list"></div>
           </aside>
         </section>
-      </header>
 
-      <main>
-        <section class="section">
-          <div class="section-header">
-            <div>
-              <p class="eyebrow">Live snapshot</p>
-              <h2>Where the road damage is hurting most</h2>
-            </div>
-            <div class="filter-row">
-              <label class="field">
-                <span>Severity</span>
-                <select id="severity-filter">
-                  <option value="all">All</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </label>
-
-              <label class="field">
-                <span>Status</span>
-                <select id="status-filter">
-                  <option value="all">All</option>
-                  <option value="open">Open</option>
-                  <option value="in-progress">In progress</option>
-                  <option value="fixed">Fixed</option>
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <div class="dashboard-grid">
-            <section class="map-card">
-              <div class="card-header">
-                <div>
-                  <p class="eyebrow">Hotspot map</p>
-                  <h3>Bengaluru reports</h3>
-                </div>
-                <p class="legend">Larger markers mean more severe damage.</p>
-              </div>
-              <div class="map-frame">
-                <div class="map-city-outline"></div>
-                <svg id="report-map" viewBox="0 0 1000 700" aria-label="Pothole map"></svg>
-              </div>
-              <div class="map-legend">
-                <span><i class="dot critical"></i> Critical</span>
-                <span><i class="dot high"></i> High</span>
-                <span><i class="dot medium"></i> Medium</span>
-                <span><i class="dot low"></i> Low</span>
-              </div>
-            </section>
-
-            <section class="panel-card">
-              <div class="card-header">
-                <div>
-                  <p class="eyebrow">Worst stretches</p>
-                  <h3>Hotspot clusters</h3>
-                </div>
-              </div>
-              <div id="hotspot-list" class="stack-list"></div>
-            </section>
-          </div>
-        </section>
-
-        <section class="section" id="constituencies">
+        <section class="section desktop-only" id="constituencies">
           <div class="section-header">
             <div>
               <p class="eyebrow">Accountability layer</p>
@@ -136,64 +121,110 @@
         </section>
 
         <section class="section form-section" id="report-form">
+          <a href="#" class="button button-secondary" style="margin-bottom: 24px; display: inline-flex; width: fit-content;">← Back to Map</a>
           <div class="section-header">
             <div>
               <p class="eyebrow">Citizen input</p>
               <h2>Add a pothole or bad road report</h2>
             </div>
             <p class="section-note">
-              Reports are stored in your browser for this MVP, so you can test the whole flow
-              immediately.
+              The form supports photos and live GPS. If Supabase is configured, submissions can
+              go directly to a live backend.
             </p>
           </div>
 
           <div class="form-layout">
             <form id="report-form-element" class="report-form">
               <label class="field">
-                <span>Location / road stretch</span>
-                <input type="text" name="title" placeholder="Outer Ring Road near Bellandur flyover" required />
+                <span class="field-label-custom">PHOTO <span style="color:#d62828">*</span></span>
+                <div class="photo-upload-box">
+                  <input type="file" id="photo-input" name="photos" accept="image/*" multiple required style="display:none;" />
+                  <label for="photo-input" class="photo-upload-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#d69e2e" stroke-width="2" width="28" height="28"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                    <strong style="color:#975a16; margin-top:12px; display:block;">Photo required</strong>
+                    <p style="color:#b7791f; text-align:center; font-size:0.85rem; margin-top:8px;">Live photo highly recommended for authenticity.</p>
+                    <span class="photo-upload-btn">Tap to Upload Photo</span>
+                  </label>
+                </div>
               </label>
 
-              <div class="field-grid">
-                <label class="field">
-                  <span>Assembly constituency</span>
-                  <select name="constituencyId" id="constituency-select" required></select>
-                </label>
+              <div id="photo-preview" class="photo-preview"></div>
 
-                <label class="field">
-                  <span>Severity</span>
-                  <select name="severity" required>
-                    <option value="critical">Critical</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </label>
-              </div>
+              <label class="field" style="margin-bottom: 24px; display: block;">
+                <span class="field-label-custom">WARD <span style="color:#d62828">*</span></span>
+                <select name="wardId" id="ward-select" required>
+                  <option value="" disabled selected>Select Ward...</option>
+                </select>
+              </label>
 
-              <div class="field-grid">
-                <label class="field">
-                  <span>Latitude</span>
-                  <input type="number" name="lat" step="0.0001" min="12.80" max="13.20" required />
-                </label>
+              <button type="button" class="location-link" id="location-button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-5.6-5.6l1.4-1.4m-12.6 0l1.4 1.4m12.6 12.6l-1.4-1.4m-12.6 0l1.4 1.4"></path></svg>
+                Use my current location
+              </button>
+              <p id="location-message" class="form-message" aria-live="polite" style="margin-top:-10px;"></p>
 
-                <label class="field">
-                  <span>Longitude</span>
-                  <input type="number" name="lng" step="0.0001" min="77.40" max="77.85" required />
-                </label>
-              </div>
+              <input type="hidden" name="lat" id="lat-input" required />
+              <input type="hidden" name="lng" id="lng-input" required />
 
               <label class="field">
-                <span>Description</span>
-                <textarea
-                  name="description"
-                  rows="4"
-                  placeholder="Deep potholes after rain, dangerous for two-wheelers and school buses."
-                  required
-                ></textarea>
+                <span class="field-label-custom">LANDMARK / ADDRESS <span style="color:#d62828">*</span></span>
+                <input type="text" name="title" placeholder="e.g., Near 5th Cross, opposite Reliance Fresh" required />
               </label>
 
-              <button type="submit" class="button button-primary button-wide">Save report</button>
+              <div class="field">
+                <span class="field-label-custom">HOW BAD IS IT? <span style="color:#d62828">*</span></span>
+                <div class="severity-radio-group">
+                  <label class="severity-card">
+                    <input type="radio" name="severity" value="low" required checked />
+                    <div class="severity-card-content border-low">
+                      <div class="radio-indicator indicator-low"></div>
+                      <div class="severity-text">
+                        <strong>Minor</strong>
+                        <p>Small surface damage, perfectly driveable</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="severity-card">
+                    <input type="radio" name="severity" value="medium" />
+                    <div class="severity-card-content border-medium">
+                      <div class="radio-indicator indicator-medium"></div>
+                      <div class="severity-text">
+                        <strong>Moderate</strong>
+                        <p>Noticeable pothole - roughly the size of a tire.</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="severity-card">
+                    <input type="radio" name="severity" value="high" />
+                    <div class="severity-card-content border-high">
+                      <div class="radio-indicator indicator-high"></div>
+                      <div class="severity-text">
+                        <strong>Severe</strong>
+                        <p>Covers a significant area - road edge piled up or large holes.</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="severity-card">
+                    <input type="radio" name="severity" value="critical" />
+                    <div class="severity-card-content border-critical">
+                      <div class="radio-indicator indicator-critical"></div>
+                      <div class="severity-text">
+                        <strong>Critical</strong>
+                        <p>Major hazard - occupies huge stretch, dangerous depth.</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Hidden defaults -->
+              <input type="hidden" name="reporterName" value="" />
+              <textarea name="description" style="display:none;" required>Reported via custom form.</textarea>
+
+              <button type="submit" class="button button-primary button-wide" style="margin-top:16px;">Save report</button>
               <p id="form-message" class="form-message" aria-live="polite"></p>
             </form>
 
@@ -208,10 +239,52 @@
             </aside>
           </div>
         </section>
+
+
       </main>
     </div>
 
-    <script src="./data.js"></script>
-    <script src="./app.js"></script>
+    <a href="#report-form" class="fab-wide" aria-label="Report Pothole">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"></path></svg>
+      <span>Report Pothole</span>
+    </a>
+
+    <!-- BOTTOM SHEET OVERLAY -->
+    <div id="bottom-sheet" class="bottom-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <div id="sheet-tags" class="sheet-tags"></div>
+        <button id="sheet-close" class="sheet-close" aria-label="Close sheet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="sheet-scroll-content">
+        <h2 id="sheet-title" class="sheet-title">Title</h2>
+        <p id="sheet-address" class="sheet-address">Nearby Address: ...</p>
+        
+        <div id="sheet-image-container" class="sheet-image-container"></div>
+        
+        <div class="sheet-metrics-row" id="sheet-metrics"></div>
+
+        <p class="sheet-section-title">ACCOUNTABILITY</p>
+        <div class="tree-layout" id="sheet-tree"></div>
+
+        <div class="sheet-actions">
+          <a href="#" id="sheet-action-mla" target="_blank" rel="noopener noreferrer" class="sheet-btn primary-btn">
+            Action: Tweet at MLA
+          </a>
+          <button class="sheet-btn secondary-btn" onclick="document.getElementById('sheet-close').click(); window.location.hash = 'report-form';">
+            It is Cleaned Up — Verify
+          </button>
+          <p class="sheet-disclaimer">All metrics are publicly sourced.</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./config.js?v=2"></script>
+    <script src="./data.js?v=5"></script>
+    <script src="./app.js?v=7"></script>
   </body>
 </html>
