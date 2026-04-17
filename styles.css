@@ -294,6 +294,15 @@ button:hover {
   background: rgba(255, 250, 242, 0.94);
 }
 
+.map-wrapper {
+  min-height: 520px;
+}
+
+.list-container {
+  border-radius: 24px;
+  border: 1px solid rgba(31, 41, 51, 0.08);
+}
+
 .map-frame {
   position: relative;
   margin-top: 18px;
@@ -644,6 +653,16 @@ button {
     margin-left: -16px;
     margin-right: -16px;
     width: calc(100% + 32px);
+  }
+
+  .map-wrapper {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .list-container {
+    border-radius: 0;
+    border: none;
   }
 
   .hero-grid, #constituencies {

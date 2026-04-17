@@ -15,6 +15,13 @@
   let mapMarkers = null;
   let heatmapLayer = null;
 
+  window.handleListClick = function(reportId) {
+    const report = state.reports.find(r => r.id === reportId);
+    if (report) {
+      openBottomSheet(report, getWard(report.wardId));
+    }
+  };
+
   window.toggleView = function(view) {
     const btnMap = document.getElementById('btn-map');
     const btnList = document.getElementById('btn-list');
@@ -66,7 +73,7 @@
       }
       
       return `
-        <div style="display:flex; padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); align-items: flex-start; cursor: pointer;">
+        <div onclick="window.handleListClick('${report.id}')" style="display:flex; padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); align-items: flex-start; cursor: pointer;">
           <div style="width: 44px; height: 44px; background: ${bgSeverity}; color: ${severityColor}; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; margin-right: 16px; border: 1px solid ${borderSeverity}; align-self: flex-start; flex-shrink: 0;">
              1
           </div>
@@ -432,7 +439,7 @@
       try {
         report.photoUrls = await uploadPhotos(state.pendingPhotos);
         await insertRemoteReport(report);
-        formMessageEl.textContent = "Report submitted to Supabase successfully.";
+        formMessageEl.textContent = "Report submitted directly to live dashboard successfully.";
         state.reports = [report, ...state.reports];
       } catch (error) {
         formMessageEl.textContent = getReadableSubmitError(error);
@@ -442,7 +449,7 @@
       state.reports = [report, ...state.reports];
       persistLocalReports();
       formMessageEl.textContent =
-        "Report saved locally. Add Supabase credentials in config.js for live uploads.";
+        "Report saved successfully.";
     }
 
     reportFormEl.reset();
@@ -721,7 +728,7 @@
     const raw = String(error && error.message ? error.message : error || "unknown error");
 
     if (raw.includes("ward_id")) {
-      return "Live submit failed: your Supabase reports table is missing the ward_id column. Run the updated schema SQL and try again.";
+      return "Live submit failed: database schema error.";
     }
 
     return `Live submit failed: ${raw}`;
